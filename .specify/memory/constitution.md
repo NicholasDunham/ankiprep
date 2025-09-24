@@ -1,50 +1,97 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+- Version change: template → 1.0.0 (initial creation)
+- Modified principles: All principles defined for Go CLI application
+- Added sections: Core Principles, Development Standards, Quality Gates, Governance
+- Removed sections: None (initial creation)
+- Templates requiring updates: ✅ aligned with plan-template.md, spec-template.md, tasks-template.md
+- Follow-up TODOs: None
+-->
+
+# AnkiPrep Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. POSIX Compliance
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All command-line interfaces MUST follow POSIX conventions and Linux/Unix best practices.
+Commands MUST use standard exit codes (0 for success, non-zero for errors), support
+standard flags (--help, --version), and follow conventional argument patterns.
+Text processing MUST handle UTF-8 encoding and respect locale settings.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: Ensures the CLI integrates seamlessly with existing Unix toolchains
+and user expectations.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Test-First Development
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+Testing is NON-NEGOTIABLE. Every feature MUST have tests written before implementation.
+Follow strict Red-Green-Refactor cycles: write failing test → user approval →
+implement minimum code to pass → refactor. Unit tests for all Go packages,
+integration tests for CLI command flows.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: Ensures reliability and maintainability in a tool that users depend on
+for their study workflows.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Clean CLI Interface
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+All CLI commands MUST provide clear, consistent interfaces with proper help text,
+examples, and error messages. Support both human-readable and machine-parseable output
+formats (JSON when appropriate). Input via stdin/args → output to stdout,
+errors to stderr.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: Users need intuitive, scriptable tools that integrate well with
+their existing workflows.
+
+### IV. Go Conventions
+
+Code MUST follow standard Go conventions: gofmt formatting, golint compliance,
+effective Go patterns, proper error handling with wrapped errors, and idiomatic
+package structure. Use Go modules for dependency management, follow semantic
+import versioning.
+
+**Rationale**: Maintains code quality and leverages the Go ecosystem's established
+best practices.
+
+### V. Performance & Reliability
+
+The application MUST be fast and reliable for typical study preparation workloads.
+Performance targets: sub-second response for typical operations, graceful handling
+of large datasets, minimal memory footprint. Proper logging for debugging,
+no silent failures.
+
+**Rationale**: Study preparation tools must be responsive and dependable to support
+effective learning workflows.
+
+## Development Standards
+
+All code MUST be written in Go using the latest stable version. External dependencies
+MUST be justified and minimal - prefer standard library solutions where possible.
+All public APIs MUST be documented with Go doc comments. Configuration MUST follow
+XDG Base Directory specification for file placement.
+
+Code reviews MUST verify Go convention compliance, test coverage, and CLI usability.
+No code may be merged without passing all tests and linting checks.
+
+## Quality Gates
+
+Before any release:
+
+- All tests MUST pass (unit and integration)
+- Code coverage MUST be above 80%
+- golint and go vet MUST report no issues
+- CLI help text and examples MUST be accurate
+- Cross-platform compatibility MUST be verified (Linux, macOS, Windows)
+- Performance regression tests MUST pass
+
+Manual testing of common user workflows is required for major releases.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other development practices. Amendments require
+documentation of rationale, impact assessment, and migration plan. All development
+decisions MUST align with these principles.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Complexity that violates these principles MUST be justified with clear business
+rationale. When in doubt, choose the simpler, more conventional approach.
+
+**Version**: 1.0.0 | **Ratified**: 2025-09-24 | **Last Amended**: 2025-09-24
