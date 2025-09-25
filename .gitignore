@@ -26,6 +26,8 @@ go.work
 Thumbs.db
 
 # Application specific
-ankiprep
+/ankiprep
+bin/ankiprep
+build/ankiprep
 *.csv
 *.log
