@@ -15,9 +15,11 @@ ankiprep [options] <input-files...>
 | Flag | Long Form | Type | Default | Description |
 |------|-----------|------|---------|-------------|
 | `-h` | `--help` | none | - | Show help message and exit |
-| `-V` | `--version` | none | - | Show version and exit |
-| `-f` | `--french` | none | false | Apply French typography rules |
-| `-o` | `--output` | string | `merged.csv` | Output file path |
+|  | `--version` | none | - | Show version and exit |
+| `-f` | `--french` | none | false | Add thin spaces before French punctuation (:;!?) |
+| `-o` | `--output` | string | auto-generated | Specify output file path |
+| `-q` | `--smart-quotes` | none | false | Convert straight quotes to curly quotes |
+| `-s` | `--skip-duplicates` | none | false | Remove entries with identical content |
 | `-v` | `--verbose` | none | false | Enable verbose output |
 
 ## Arguments
@@ -38,14 +40,30 @@ ankiprep [options] <input-files...>
 ## Standard Output Format
 
 ### Success Case
+
+```text
+Processing 1 input file...
+Done. Processed 2 unique entries in 0.00 seconds
 ```
-Processing 3 input files...
-Merging headers: found 8 unique columns
-Processing records: 1,247 total entries
-Removing duplicates: found 23 duplicates
-Applying typography formatting...
-Writing output to merged.csv
-Done. Processed 1,224 unique entries in 0.15 seconds
+
+### Verbose Output
+```text
+Processing 1 input file...
+File test.csv: 2 records (42 bytes) (comma-separated)
+Memory status: Memory: 147.0 KB allocated, 544.0 KB heap, 6.4 MB system, 0 GC cycles (+6.5 KB from start)
+Processing records: 2 total entries
+Merging headers: found 2 unique columns
+Writing output to test.anki.csv
+Done. Processed 2 unique entries in 0.00 seconds
+
+Processing Summary:
+Input files: 1
+  1. test.csv
+Total input records: 2
+Output records: 2
+Processing time: 0.00 seconds
+Processing rate: 3071 records/second
+Processing completed successfully
 ```
 
 ### Progress Indicator (large files)
@@ -83,13 +101,19 @@ ankiprep file1.csv file2.tsv file3.csv
 ankiprep -o flashcards.csv input1.csv input2.csv
 ```
 
-### French Typography
+### Advanced Options
 ```bash
-# Apply French typography rules
-ankiprep -f french_content.csv
+# Apply French typography and smart quotes
+ankiprep -f -q french_content.csv
 
-# French mode with custom output
-ankiprep --french --output french_cards.csv content.csv
+# Skip duplicates for faster processing
+ankiprep -s large_file.csv
+
+# Combine multiple options with short flags
+ankiprep -fqs -o output.csv file1.csv file2.csv
+
+# Verbose output with all options
+ankiprep -fqsv -o final.csv *.csv
 ```
 
 ## Output File Format

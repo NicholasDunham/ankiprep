@@ -35,62 +35,64 @@ Single project structure:
 - `tests/` - All test files
 
 ## Phase 3.1: Setup
-- [ ] T001 Create Go module and project structure (cmd/, internal/, pkg/, tests/)
-- [ ] T002 Initialize go.mod with dependencies: github.com/spf13/cobra, golang.org/x/text/unicode/norm
-- [ ] T003 [P] Configure linting tools (golangci-lint config in .golangci.yml)
-- [ ] T004 [P] Setup GitHub Actions CI workflow in .github/workflows/ci.yml
+- [x] T001 Create Go module and project structure (cmd/, internal/, pkg/, tests/)
+- [x] T002 Initialize go.mod with dependencies: github.com/spf13/cobra, golang.org/x/text/unicode/norm
+- [x] T003 [P] Configure linting tools (golangci-lint config in .golangci.yml)
+- [x] T004 [P] Setup GitHub Actions CI workflow in .github/workflows/ci.yml
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T005 [P] CLI contract test for help/version flags in tests/contract/test_cli_basic.go
-- [ ] T006 [P] CLI contract test for file processing in tests/contract/test_cli_processing.go
-- [ ] T007 [P] CLI contract test for French typography flag in tests/contract/test_cli_french.go
-- [ ] T008 [P] CLI contract test for error handling in tests/contract/test_cli_errors.go
-- [ ] T009 [P] Integration test single file processing in tests/integration/test_single_file.go
-- [ ] T010 [P] Integration test multiple file merging in tests/integration/test_multiple_files.go
-- [ ] T011 [P] Integration test duplicate detection in tests/integration/test_duplicates.go
-- [ ] T012 [P] Integration test French typography in tests/integration/test_french_typography.go
-- [ ] T013 [P] Integration test smart quotes conversion in tests/integration/test_smart_quotes.go
-- [ ] T014 [P] Integration test multiline content handling in tests/integration/test_multiline_content.go
+- [x] T005 [P] CLI contract test for help/version flags in tests/contract/cli_basic_test.go
+- [x] T006 [P] CLI contract test for file processing in tests/contract/cli_processing_test.go
+- [x] T007 [P] CLI contract test for French typography flag in tests/contract/cli_french_test.go
+- [x] T008 [P] CLI contract test for error handling in tests/contract/cli_errors_test.go
+- [x] T009 [P] Integration test single file processing in tests/integration/single_file_test.go
+- [x] T010 [P] Integration test multiple file merging in tests/integration/multiple_files_test.go
+- [x] T011 [P] Integration test duplicate detection in tests/integration/duplicates_test.go
+- [x] T012 [P] Integration test French typography in tests/integration/french_typography_test.go
+- [x] T013 [P] Integration test smart quotes conversion in tests/integration/smart_quotes_test.go
+- [x] T014 [P] Integration test multiline content handling in tests/integration/multiline_content_test.go
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
-- [ ] T015 [P] InputFile model in internal/models/input_file.go
-- [ ] T016 [P] DataEntry model in internal/models/data_entry.go
-- [ ] T017 [P] OutputFile model in internal/models/output_file.go
-- [ ] T018 [P] ProcessingReport model in internal/models/processing_report.go
-- [ ] T019 [P] TypographyProcessor model in internal/models/typography_processor.go
-- [ ] T020 [P] CSV parser service in internal/services/csv_parser.go
-- [ ] T021 [P] File validator service in internal/services/file_validator.go
-- [ ] T022 [P] Duplicate detector service in internal/services/duplicate_detector.go
-- [ ] T023 [P] Column merger service in internal/services/column_merger.go
-- [ ] T024 [P] Typography service in internal/services/typography_service.go
-- [ ] T025 [P] Anki formatter service in internal/services/anki_formatter.go
-- [ ] T026 [P] Progress reporter service in internal/services/progress_reporter.go
-- [ ] T027 Main application processor in internal/app/processor.go
-- [ ] T028 CLI root command setup with cobra in cmd/ankiprep/root.go
-- [ ] T029 CLI process command implementation in cmd/ankiprep/process.go
-- [ ] T030 Main entry point in cmd/ankiprep/main.go
+- [x] T015 [P] InputFile model in internal/models/input_file.go
+- [x] T016 [P] DataEntry model in internal/models/data_entry.go
+- [x] T017 [P] OutputFile model in internal/models/output_file.go
+- [x] T018 [P] ProcessingReport model in internal/models/processing_report.go
+- [x] T019 [P] TypographyProcessor model in internal/models/typography_processor.go
+- [x] T020 [P] CSV parser service in internal/services/csv_parser.go
+- [x] T021 [P] File validator service in internal/services/file_validator.go
+- [x] T022 [P] Duplicate detector service in internal/services/duplicate_detector.go
+- [x] T023 [P] Column merger service in internal/services/column_merger.go
+- [x] T024 [P] Typography service in internal/services/typography_service.go
+- [x] T025 [P] Anki formatter service in internal/services/anki_formatter.go
+- [x] T026 [P] Progress reporter service in internal/services/progress_reporter.go
+- [x] T027 Main application processor in internal/app/processor.go
+- [x] T028 CLI root command setup with cobra in cmd/ankiprep/root.go
+- [x] T029 CLI process command implementation in cmd/ankiprep/process.go
+- [x] T030 Main entry point in cmd/ankiprep/main.go
 
 ## Phase 3.4: Integration
-- [ ] T031 File I/O error handling in internal/services/file_service.go
-- [ ] T032 Progress indicator integration for large files (>10MB or >5s processing)
-- [ ] T033 Partial output file cleanup on processing failure
-- [ ] T034 Exit code handling and error message formatting
-- [ ] T035 Memory usage monitoring and optimization for large datasets
+- [x] T031 File I/O error handling in internal/services/file_service.go
+- [x] T032 Progress indicator integration for large files (>10MB or >5s processing)
+- [x] T033 Partial output file cleanup on processing failure
+- [x] T034 Exit code handling and error message formatting
+- [x] T035 Memory usage monitoring and optimization for large datasets
 
 ## Phase 3.5: Polish
-- [ ] T036 [P] Unit tests for InputFile model in tests/unit/test_input_file.go
-- [ ] T037 [P] Unit tests for DataEntry model in tests/unit/test_data_entry.go
-- [ ] T038 [P] Unit tests for CSV parser in tests/unit/test_csv_parser.go
-- [ ] T039 [P] Unit tests for duplicate detection in tests/unit/test_duplicate_detector.go
-- [ ] T040 [P] Unit tests for typography processing in tests/unit/test_typography_processor.go
-- [ ] T041 [P] Performance tests for large file processing in tests/performance/test_large_files.go
-- [ ] T042 [P] Memory usage tests in tests/performance/test_memory_usage.go
-- [ ] T043 [P] Cross-platform compatibility tests in tests/integration/test_cross_platform.go
-- [ ] T044 [P] Update README.md with installation and usage instructions
-- [ ] T045 [P] Add example CSV files in examples/ directory
-- [ ] T046 Execute manual testing scenarios from quickstart.md
-- [ ] T047 Build and test cross-platform binaries (Linux, macOS, Windows)
+- [x] T036 [P] Unit tests for InputFile model in tests/unit/input_file_test.go
+- [x] T037 [P] Unit tests for DataEntry model in tests/unit/data_entry_test.go
+- [x] T038 [P] Unit tests for CSV parser in tests/unit/csv_parser_test.go
+- [x] T039 [P] Unit tests for duplicate detection in tests/unit/duplicate_detector_test.go
+- [x] T040 [P] Unit tests for typography processing in tests/unit/typography_service_test.go
+- [x] T041 [P] Performance tests for large file processing in tests/performance/large_files_test.go
+- [x] T042 [P] Memory usage tests in tests/performance/memory_usage_test.go
+- [x] T043 [P] Cross-platform compatibility tests in tests/integration/cross_platform_test.go
+- [x] T044 [P] Update README.md with installation and usage instructions
+- [x] T045 [P] Add example CSV files in examples/ directory
+- [x] T046 Execute manual testing scenarios from quickstart.md
+- [x] T047 Build and test cross-platform binaries (Linux, macOS, Windows)
+- [x] T048 Implement ProcessingReport output functionality in cmd/ankiprep/process.go
+- [x] T049 Implement comprehensive help text with examples and usage patterns in cmd/ankiprep/root.go
 
 ## Dependencies
 - Setup (T001-T004) before everything
@@ -99,7 +101,7 @@ Single project structure:
 - Services before app processor (T027)
 - App processor before CLI commands (T028-T030)
 - Core implementation before integration (T031-T035)
-- Everything before polish (T036-T047)
+- Everything before polish (T036-T049)
 
 ## Parallel Example
 ```bash
@@ -127,6 +129,7 @@ Task: "OutputFile model in internal/models/output_file.go"
 - **Error Handling**: Fail-fast with clear error messages and proper exit codes
 - **Memory Management**: Process files in memory with progress indicators for large files
 - **Output Format**: Always generate Anki-compatible CSV with proper headers
+- **Help Text**: Provide comprehensive usage examples, supported formats, and troubleshooting guidance
 
 ## Validation Checklist
 *GATE: Checked before execution*

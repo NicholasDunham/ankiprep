@@ -1,8 +1,8 @@
 
-# Implementation Plan: CSV to Anki Processor
+# Implementation Plan: Remove Duplicate CSV Header in Anki Output
 
-**Branch**: `001-command-line-application` | **Date**: 2025-09-24 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/001-command-line-application/spec.md`
+**Branch**: `003-the-program-is` | **Date**: September 24, 2025 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/003-the-program-is/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,27 +31,30 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Command-line application that accepts one or more CSV files (exported from Google Sheets, Notion, or other applications) and processes them by removing duplicates, merging columns, applying typographic formatting, and converting to Anki-compatible format with proper headers for direct import. Built in Go with minimal external dependencies following POSIX conventions.
+Fix duplicate header bug in CSV-to-Anki processing where the system correctly adds Anki metadata headers (#separator, #html, #columns) but incorrectly retains the original CSV header row, creating redundant column information. Solution: Remove first row by default, add --keep-header/-k flag for preservation when needed.
 
 ## Technical Context
 **Language/Version**: Go 1.21+ (latest stable)  
-**Primary Dependencies**: Standard library (encoding/csv, os, fmt, strings, unicode) + github.com/spf13/cobra (CLI) + golang.org/x/text/unicode/norm (typography)  
+**Primary Dependencies**: github.com/spf13/cobra (CLI), golang.org/x/text/unicode/norm (typography), encoding/csv (standard library)  
 **Storage**: File system (CSV input/output, no database)  
-**Testing**: Go standard testing package (go test)  
+**Testing**: Go test framework with TDD approach  
 **Target Platform**: Cross-platform (Linux, macOS, Windows)  
-**Project Type**: single (CLI application)  
-**Performance Goals**: Sub-second response for typical files (<10MB), progress indicators for large files  
-**Constraints**: Memory-dependent file size limits, UTF-8 encoding only, comma/tab separators only  
-**Scale/Scope**: Personal/educational use, processing multiple CSV files with thousands of entries
+**Project Type**: single - CLI application with existing modular structure  
+**Performance Goals**: Sub-second response for typical CSV processing operations  
+**Constraints**: POSIX compliance, minimal dependencies, robust error handling  
+**Scale/Scope**: Individual user files (typical size: hundreds of flashcards, <10MB CSV files)
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**POSIX Compliance**: ✅ CLI will use standard exit codes, support --help/--version flags, handle UTF-8 properly
-**Test-First Development**: ✅ Plan includes contract tests before implementation, Red-Green-Refactor approach
-**Clean CLI Interface**: ✅ Clear command interface with proper help text, stdin/args input, stdout/stderr output
-**Go Conventions**: ✅ Standard Go project structure, gofmt, golint compliance, proper error handling
-**Performance & Reliability**: ✅ Sub-second response targets, graceful large file handling, proper logging
+- **POSIX Compliance**: ✅ PASS - Feature adds --keep-header/-k flag following POSIX conventions, maintains standard exit codes and error handling
+- **Test-First Development**: ✅ PASS - Will follow TDD with failing tests before implementation, building on existing test structure
+- **Clean CLI Interface**: ✅ PASS - New flag integrates cleanly with existing CLI, provides clear help text and error messages
+- **Go Conventions**: ✅ PASS - Extends existing Go codebase following established patterns and conventions
+- **Performance & Reliability**: ✅ PASS - Simple header processing maintains sub-second response times, adds robust error handling
+
+**Initial Constitution Check**: ✅ PASS  
+**Post-Design Constitution Check**: ✅ PASS - No violations introduced by design artifacts
 
 ## Project Structure
 
@@ -69,21 +72,16 @@ specs/[###-feature]/
 ### Source Code (repository root)
 ```
 # Option 1: Single project (DEFAULT)
-cmd/
-└── ankiprep/          # Main application entry point
-
-internal/              # Internal packages
+src/
 ├── models/
 ├── services/
-└── app/
-
-pkg/                   # Reusable packages (if needed)
+├── cli/
+└── lib/
 
 tests/
 ├── contract/
 ├── integration/
-├── unit/
-└── performance/
+└── unit/
 
 # Option 2: Web application (when "frontend" + "backend" detected)
 backend/
@@ -108,7 +106,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: Option 1 (Single CLI project structure)
+**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -207,7 +205,7 @@ ios/ or android/
 - [x] Phase 0: Research complete (/plan command)
 - [x] Phase 1: Design complete (/plan command)
 - [x] Phase 2: Task planning complete (/plan command - describe approach only)
-- [x] Phase 3: Tasks generated (/tasks command)
+- [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
@@ -215,7 +213,7 @@ ios/ or android/
 - [x] Initial Constitution Check: PASS
 - [x] Post-Design Constitution Check: PASS
 - [x] All NEEDS CLARIFICATION resolved
-- [x] Complexity deviations documented
+- [x] Complexity deviations documented (none required)
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*

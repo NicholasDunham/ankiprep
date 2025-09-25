@@ -1,8 +1,8 @@
 
-# Implementation Plan: CSV to Anki Processor
+# Implementation Plan: Cloze Deletion Colon Exception
 
-**Branch**: `001-command-line-application` | **Date**: 2025-09-24 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/001-command-line-application/spec.md`
+**Branch**: `002-i-ve-found` | **Date**: 2025-09-24 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/002-i-ve-found/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,27 +31,35 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Command-line application that accepts one or more CSV files (exported from Google Sheets, Notion, or other applications) and processes them by removing duplicates, merging columns, applying typographic formatting, and converting to Anki-compatible format with proper headers for direct import. Built in Go with minimal external dependencies following POSIX conventions.
+Fix French typography processing to handle Anki cloze deletion blocks correctly by not adding Narrow Non-Breaking Spaces before cloze syntax colons (::) while preserving all other French typography rules. The feature requires extending the existing French typography service to identify and parse cloze deletion patterns `{{c#::content}}` and `{{c#::content::hint}}` and apply differential colon handling rules.
 
 ## Technical Context
 **Language/Version**: Go 1.21+ (latest stable)  
-**Primary Dependencies**: Standard library (encoding/csv, os, fmt, strings, unicode) + github.com/spf13/cobra (CLI) + golang.org/x/text/unicode/norm (typography)  
+**Primary Dependencies**: github.com/spf13/cobra (CLI), golang.org/x/text/unicode/norm (typography)  
 **Storage**: File system (CSV input/output, no database)  
-**Testing**: Go standard testing package (go test)  
-**Target Platform**: Cross-platform (Linux, macOS, Windows)  
-**Project Type**: single (CLI application)  
-**Performance Goals**: Sub-second response for typical files (<10MB), progress indicators for large files  
-**Constraints**: Memory-dependent file size limits, UTF-8 encoding only, comma/tab separators only  
-**Scale/Scope**: Personal/educational use, processing multiple CSV files with thousands of entries
+**Testing**: Go standard testing package, table-driven tests  
+**Target Platform**: Cross-platform CLI (Linux, macOS, Windows)
+**Project Type**: single (CLI application extending existing ankiprep tool)  
+**Performance Goals**: Sub-second response for typical CSV files, process files up to 10MB efficiently  
+**Constraints**: Must maintain backward compatibility with existing French typography rules, POSIX compliance required  
+**Scale/Scope**: Personal-use tool, handles typical Anki card volumes (hundreds to thousands of cards)
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**POSIX Compliance**: ✅ CLI will use standard exit codes, support --help/--version flags, handle UTF-8 properly
-**Test-First Development**: ✅ Plan includes contract tests before implementation, Red-Green-Refactor approach
-**Clean CLI Interface**: ✅ Clear command interface with proper help text, stdin/args input, stdout/stderr output
-**Go Conventions**: ✅ Standard Go project structure, gofmt, golint compliance, proper error handling
-**Performance & Reliability**: ✅ Sub-second response targets, graceful large file handling, proper logging
+**I. POSIX Compliance**: ✅ PASS - Feature extends existing CLI following POSIX conventions, no new command interface changes required
+
+**II. Test-First Development**: ✅ PASS - Feature requires unit tests for cloze parsing logic and integration tests for typography processing
+
+**III. Clean CLI Interface**: ✅ PASS - No CLI interface changes, extends existing --french flag functionality transparently  
+
+**IV. Go Conventions**: ✅ PASS - Will follow existing codebase patterns, standard Go formatting and error handling
+
+**V. Performance & Reliability**: ✅ PASS - Text processing enhancement with minimal performance impact, proper error logging for malformed blocks
+
+**Development Standards**: ✅ PASS - Pure Go implementation using existing standard library patterns, minimal dependencies
+
+**Quality Gates**: ✅ PASS - Standard test coverage, linting, and cross-platform compatibility maintained
 
 ## Project Structure
 
@@ -69,21 +77,16 @@ specs/[###-feature]/
 ### Source Code (repository root)
 ```
 # Option 1: Single project (DEFAULT)
-cmd/
-└── ankiprep/          # Main application entry point
-
-internal/              # Internal packages
+src/
 ├── models/
 ├── services/
-└── app/
-
-pkg/                   # Reusable packages (if needed)
+├── cli/
+└── lib/
 
 tests/
 ├── contract/
 ├── integration/
-├── unit/
-└── performance/
+└── unit/
 
 # Option 2: Web application (when "frontend" + "backend" detected)
 backend/
@@ -108,7 +111,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: Option 1 (Single CLI project structure)
+**Structure Decision**: Option 1 (Single project) - CLI application extending existing ankiprep tool
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -169,18 +172,25 @@ ios/ or android/
 
 **Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P] 
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+- Generate tasks from Phase 1 design docs (contracts, data-model.md, quickstart.md)
+- Each contract method → unit test task [P] + implementation task
+- Each entity → model creation task [P] + validation test task [P]
+- Each quickstart scenario → integration test task
+- Typography service enhancement → core implementation tasks
+- CLI integration → integration test tasks
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
-- Dependency order: Models before services before UI
-- Mark [P] for parallel execution (independent files)
+- TDD order: Tests before implementation (contract tests first)
+- Dependency order: Models → Services → CLI integration → End-to-end tests
+- Mark [P] for parallel execution (independent files/functions)
+- Group related tasks for efficient development workflow
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Output**: 20-25 numbered, ordered tasks in tasks.md covering:
+1. Cloze detection unit tests (5 tasks)
+2. Typography processing unit tests (5 tasks) 
+3. CLI integration tests (3 tasks)
+4. Implementation tasks (7 tasks)
+5. Performance/integration validation (3-5 tasks)
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -207,7 +217,7 @@ ios/ or android/
 - [x] Phase 0: Research complete (/plan command)
 - [x] Phase 1: Design complete (/plan command)
 - [x] Phase 2: Task planning complete (/plan command - describe approach only)
-- [x] Phase 3: Tasks generated (/tasks command)
+- [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 

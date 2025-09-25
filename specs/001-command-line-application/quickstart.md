@@ -42,23 +42,20 @@ What is CSV?,Comma-separated values,data
 # Process single file
 ./ankiprep test-input.csv
 
-# Expected output file: merged.csv
+# Expected output file: test-input.anki.csv
 # Expected console output:
-# Processing 1 input files...
-# Merging headers: found 3 unique columns  
-# Processing records: 2 total entries
-# Removing duplicates: found 0 duplicates
-# Writing output to merged.csv
-# Done. Processed 2 unique entries in <time>
+# Processing 1 input file...
+# Done. Processed 2 unique entries in 0.00 seconds
 ```
 
 ### 3. Verify Output
 
-Expected `merged.csv` content:
+Expected `test-input.anki.csv` content:
 ```csv
-#separator:Comma
+#separator:comma
 #html:true
 #columns:Front,Back,Tags
+Front,Back,Tags
 What is Go?,A programming language,programming
 What is CSV?,Comma-separated values,data
 ```
@@ -72,8 +69,11 @@ Question : "Que dis-tu ?",Réponse : « Bonjour ! »
 ```
 
 ```bash
-# Process with French typography
+# Process with French typography (short flag)
 ./ankiprep -f -o french-output.csv french-test.csv
+
+# Or with long flag
+./ankiprep --french -o french-output.csv french-test.csv
 
 # Verify NNBSP added before punctuation and inside quotes
 ```
@@ -88,8 +88,8 @@ What is Go?,A programming language,programming
 ```
 
 ```bash
-# Process multiple files (note duplicate detection)
-./ankiprep -o combined.csv test-input.csv test-input2.csv
+# Process multiple files with duplicate detection
+./ankiprep -s -o combined.csv test-input.csv test-input2.csv
 
 # Expected: 3 unique entries (1 duplicate removed)
 ```
