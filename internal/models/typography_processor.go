@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -101,7 +102,18 @@ func (tp *TypographyProcessor) applyFrenchTypography(text string) string {
 	// STEP 1: Convert ALL NBSP to NNBSP first (no exceptions!)
 	text = strings.ReplaceAll(text, nbsp, nnbsp)
 
-	// STEP 2: Apply NNBSP before French punctuation marks: : ; ! ?
+	// STEP 2: Protect cloze deletion syntax from French typography rules
+	// Find all cloze deletions and temporarily replace them with placeholders
+	clozePattern := regexp.MustCompile(`\{\{c\d+::[^}]*\}\}`)
+	clozeDeletions := clozePattern.FindAllString(text, -1)
+
+	// Replace cloze deletions with numbered placeholders
+	for i, cloze := range clozeDeletions {
+		placeholder := fmt.Sprintf("__CLOZE_PLACEHOLDER_%d__", i)
+		text = strings.Replace(text, cloze, placeholder, 1)
+	}
+
+	// STEP 3: Apply NNBSP before French punctuation marks: : ; ! ?
 	punctuation := []string{":", ";", "!", "?"}
 
 	for _, punct := range punctuation {
@@ -122,7 +134,15 @@ func (tp *TypographyProcessor) applyFrenchTypography(text string) string {
 
 			return wordChar + nnbsp + punct
 		})
-	} // Handle French guillemets (quotation marks)
+	}
+
+	// STEP 4: Restore cloze deletions from placeholders
+	for i, cloze := range clozeDeletions {
+		placeholder := fmt.Sprintf("__CLOZE_PLACEHOLDER_%d__", i)
+		text = strings.Replace(text, placeholder, cloze, 1)
+	}
+
+	// Handle French guillemets (quotation marks)
 	text = tp.applyGuillemetSpacing(text)
 
 	return text

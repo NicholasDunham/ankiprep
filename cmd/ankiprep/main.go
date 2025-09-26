@@ -277,10 +277,34 @@ func removeDuplicates(entries []*models.DataEntry) []*models.DataEntry {
 	return unique
 }
 
+// isEnglishColumn determines if a column header indicates English content
+// that should not have French typography rules applied
+func isEnglishColumn(header string) bool {
+	header = strings.ToLower(strings.TrimSpace(header))
+	englishPatterns := []string{"english", "eng", "pronunciation", "phonetic"}
+
+	for _, pattern := range englishPatterns {
+		if strings.Contains(header, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
 func applyTypography(entries []*models.DataEntry, french, quotes bool) {
-	processor := models.NewTypographyProcessor(french, quotes)
 	for _, entry := range entries {
 		for key, value := range entry.Values {
+			// Determine which typography rules to apply based on column header
+			isEnglish := isEnglishColumn(key)
+
+			// Always apply smart quotes if enabled
+			applySmartQuotes := quotes
+
+			// Only apply French typography to non-English fields
+			applyFrench := french && !isEnglish
+
+			// Create processor with appropriate settings
+			processor := models.NewTypographyProcessor(applyFrench, applySmartQuotes)
 			entry.Values[key] = processor.ProcessText(value)
 		}
 	}
