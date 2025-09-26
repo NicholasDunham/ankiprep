@@ -1,19 +1,37 @@
 # ankiprep
 
-A Go CLI tool for processing CSV/TSV files into Anki-compatible format.
+A lightweight Go CLI tool for processing CSV/TSV files into Anki-compatible format with French typography enhancement.
 
 ## Features
 
-- Process CSV and TSV files
-- Smart quotes and French typography formatting
-- Duplicate detection and removal
-- Memory monitoring for large files
+- **File Processing**: Convert CSV and TSV files to Anki format
+- **French Typography**: Smart quotes and proper French punctuation spacing
+- **Multi-file Support**: Process and merge multiple input files  
+- **Duplicate Detection**: Automatic duplicate entry removal
+- **Header Management**: Flexible header preservation options
+- **Memory Efficient**: Optimized for large file processing
 
 ## Installation
 
 ```bash
-# Build the binary
+# Build from source
 go build -o ankiprep ./cmd/ankiprep
+
+# Or use go run for development
+go run ./cmd/ankiprep --help
+```
+
+## Quick Start
+
+```bash
+# Basic processing
+./ankiprep input.csv
+
+# French text with typography enhancement  
+./ankiprep french_vocab.csv -o anki_ready.csv
+
+# Process multiple files
+./ankiprep file1.csv file2.tsv -o combined.csv -v
 ```
 
 ## Usage
@@ -68,12 +86,53 @@ Creates Anki-compatible CSV files with proper escaping and UTF-8 encoding.
 
 ## Development
 
+### Project Structure
+
+```text
+cmd/ankiprep/        # Main CLI application
+  main.go            # All processing logic (377 lines)
+  errors.go          # Error handling utilities
+internal/models/     # Core data structures  
+  *.go               # Data models and typography processing
+tests/               # Comprehensive test suite
+  unit/              # Unit tests for models and core logic
+  integration/       # CLI integration tests  
+  performance/       # Performance and memory tests
+```
+
+### Architecture
+
+The ankiprep codebase follows a **simplified direct processing architecture**:
+
+- **Single Entry Point**: All CSV→Anki transformation logic in `cmd/ankiprep/main.go`
+- **Essential Models**: Core data structures for file processing and typography
+- **CLI-Focused Testing**: Tests validate real user workflows via command-line interface
+
+This design prioritizes **simplicity and maintainability** over complex abstractions.
+
+### Building and Testing
+
 ```bash
-# Run tests
+# Run all tests
 go test ./...
 
-# Build binary
-go build -o ankiprep ./cmd/ankiprep
+# Run specific test categories
+go test ./tests/unit/...
+go test ./tests/integration/...
 
-# Run without building
+# Build optimized binary
+go build -ldflags "-s -w" -o ankiprep ./cmd/ankiprep
+
+# Development with live rebuilding
 go run ./cmd/ankiprep --help
+```
+
+### Contributing
+
+The project emphasizes **constitutional simplicity principles**:
+
+1. **Simplicity**: Prefer direct code over abstractions
+2. **Directness**: Avoid unnecessary indirection layers  
+3. **Efficiency**: Optimize for common use cases
+4. **Maintainability**: Single source of truth for business logic
+5. **Testability**: Focus on end-user scenarios via CLI interface

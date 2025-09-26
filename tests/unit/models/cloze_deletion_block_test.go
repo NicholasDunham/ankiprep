@@ -1,5 +1,4 @@
 package models_test
-package models_test
 
 import (
 	"testing"
@@ -128,7 +127,7 @@ func TestClozeDeletionBlock_Contract(t *testing.T) {
 				isValid := err == nil
 
 				if isValid != tt.wantValid {
-					t.Errorf("ClozeDeletionBlock.Validate() valid = %v, want %v, error = %v", 
+					t.Errorf("ClozeDeletionBlock.Validate() valid = %v, want %v, error = %v",
 						isValid, tt.wantValid, err)
 				}
 			})
@@ -169,7 +168,7 @@ func TestClozeDeletionBlock_PatternMatching(t *testing.T) {
 			shouldMatch: false,
 		},
 		{
-			name:        "invalid - no opening brackets", 
+			name:        "invalid - no opening brackets",
 			fullText:    "c1::Paris}}",
 			shouldMatch: false,
 		},
@@ -196,7 +195,7 @@ func TestClozeDeletionBlock_PatternMatching(t *testing.T) {
 			matches := models.IsValidClozeDeletionPattern(tt.fullText)
 
 			if matches != tt.shouldMatch {
-				t.Errorf("IsValidClozeDeletionPattern(%q) = %v, want %v", 
+				t.Errorf("IsValidClozeDeletionPattern(%q) = %v, want %v",
 					tt.fullText, matches, tt.shouldMatch)
 			}
 		})

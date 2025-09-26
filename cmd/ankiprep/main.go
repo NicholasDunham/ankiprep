@@ -1,12 +1,13 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
-	"ankiprep/internal/app"
 	"ankiprep/internal/models"
 
 	"github.com/spf13/cobra"
@@ -19,13 +20,10 @@ var (
 	frenchMode     bool
 	smartQuotes    bool
 	skipDuplicates bool
-	keepHeader     bool // New flag for preserving CSV headers
-
-	// Error formatter
-	errorFormatter *ErrorFormatter
+	keepHeader     bool
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command
 var rootCmd = &cobra.Command{
 	Use:   "ankiprep [files...]",
 	Short: "Convert CSV files to Anki-compatible format",
@@ -50,159 +48,327 @@ Examples:
 }
 
 func init() {
-	// Root command flags
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
-	rootCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Specify output file path. If not provided, generates based on input filename(s)")
+	rootCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Specify output file path")
 	rootCmd.Flags().BoolVarP(&frenchMode, "french", "f", false, "Add thin spaces before French punctuation (:;!?)")
 	rootCmd.Flags().BoolVarP(&smartQuotes, "smart-quotes", "q", false, "Convert straight quotes to curly quotes")
 	rootCmd.Flags().BoolVarP(&skipDuplicates, "skip-duplicates", "s", false, "Remove entries with identical content")
-	rootCmd.Flags().BoolVarP(&keepHeader, "keep-header", "k", false, "Preserve the first row of CSV files (default: remove header)")
+	rootCmd.Flags().BoolVarP(&keepHeader, "keep-header", "k", false, "Preserve the first row of CSV files")
 }
 
-// runProcess executes the main processing logic
+// runProcess executes the main processing logic - simplified version
 func runProcess(cmd *cobra.Command, args []string) {
-	// Initialize error formatter with verbose setting
-	errorFormatter = NewErrorFormatter(verbose)
+	startTime := time.Now()
 
-	// Set up panic recovery
-	defer errorFormatter.HandlePanic()
+	// Validate and collect input files
+	inputPaths, err := collectInputFiles(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 
-	// Validate input files exist
+	if verbose {
+		fmt.Printf("Processing %d input file(s)...\n", len(inputPaths))
+	}
+
+	// Parse input files
+	var inputFiles []*models.InputFile
+	for _, path := range inputPaths {
+		inputFile, err := parseFile(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing %s: %v\n", path, err)
+			os.Exit(1)
+		}
+		inputFiles = append(inputFiles, inputFile)
+
+		if verbose {
+			fmt.Printf("File %s: %d records (%d bytes) (%s)\n",
+				path, len(inputFile.Records)+1, getFileSize(path), getFileType(path))
+		}
+	}
+
+	// Merge headers
+	mergedHeaders := mergeHeaders(inputFiles)
+	if verbose {
+		fmt.Printf("Merging headers: found %d unique columns\n", len(mergedHeaders))
+	}
+
+	// Process all records
+	var allEntries []*models.DataEntry
+	totalRecords := 0
+
+	for _, inputFile := range inputFiles {
+		// Add header if keepHeader is true and this is the first file
+		if keepHeader && len(allEntries) == 0 {
+			headerEntry := models.NewDataEntry(make(map[string]string), inputFile.Path, 0)
+			for i, header := range inputFile.Headers {
+				if i < len(mergedHeaders) {
+					headerEntry.Values[mergedHeaders[i]] = header
+				}
+			}
+			allEntries = append(allEntries, headerEntry)
+		}
+
+		// Process data records
+		for lineNum, record := range inputFile.Records {
+			entry := models.NewDataEntry(make(map[string]string), inputFile.Path, lineNum+2)
+			for i, value := range record {
+				if i < len(inputFile.Headers) && i < len(mergedHeaders) {
+					entry.Values[mergedHeaders[i]] = value
+				}
+			}
+			allEntries = append(allEntries, entry)
+			totalRecords++
+		}
+	}
+
+	if verbose {
+		fmt.Printf("Processing records: %d total entries\n", totalRecords)
+	}
+
+	// Remove duplicates if requested
+	if skipDuplicates {
+		originalCount := len(allEntries)
+		allEntries = removeDuplicates(allEntries)
+		if verbose && originalCount > len(allEntries) {
+			fmt.Printf("Removing duplicates: %d duplicates found\n", originalCount-len(allEntries))
+		} else if verbose {
+			fmt.Printf("Removing duplicates: no duplicates found\n")
+		}
+	}
+
+	// Apply typography formatting
+	if frenchMode || smartQuotes {
+		if verbose {
+			fmt.Printf("Applying typography formatting")
+			if frenchMode && smartQuotes {
+				fmt.Printf(" (French typography and smart quotes)")
+			} else if frenchMode {
+				fmt.Printf(" (French typography)")
+			} else {
+				fmt.Printf(" (smart quotes)")
+			}
+			fmt.Printf("...\n")
+		}
+		applyTypography(allEntries, frenchMode, smartQuotes)
+	}
+
+	// Write output
+	outputFile := determineOutputPath(inputPaths)
+	if verbose {
+		fmt.Printf("Writing output to %s\n", outputFile)
+	}
+
+	err = writeCSV(outputFile, mergedHeaders, allEntries)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing output: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Success message
+	processingTime := time.Since(startTime)
+	fmt.Printf("Done. Processed %d unique entries in %.2f seconds\n",
+		len(allEntries), processingTime.Seconds())
+
+	if verbose {
+		showSummary(inputPaths, totalRecords, len(allEntries), processingTime)
+	}
+}
+
+// Helper functions - simplified implementations
+
+func collectInputFiles(args []string) ([]string, error) {
 	var inputPaths []string
 	for _, arg := range args {
-		// Handle glob patterns
 		matches, err := filepath.Glob(arg)
 		if err != nil {
-			errorFormatter.ExitWithError(err, "pattern matching")
+			return nil, fmt.Errorf("pattern matching failed for %s: %v", arg, err)
 		}
 
 		if len(matches) == 0 {
-			// No glob match, check if file exists directly
 			if _, err := os.Stat(arg); os.IsNotExist(err) {
-				errorFormatter.ExitWithError(fmt.Errorf("file not found: %s", arg), "input validation")
+				return nil, fmt.Errorf("file not found: %s", arg)
 			}
 			inputPaths = append(inputPaths, arg)
 		} else {
-			// Add all matches, filtering for supported extensions
-			validMatches := 0
 			for _, match := range matches {
 				if isSupportedFile(match) {
 					inputPaths = append(inputPaths, match)
-					validMatches++
 				}
-			}
-
-			if validMatches == 0 {
-				errorFormatter.PrintWarning(fmt.Sprintf("No supported files found for pattern: %s", arg))
 			}
 		}
 	}
 
 	if len(inputPaths) == 0 {
-		errorFormatter.ExitWithError(fmt.Errorf("no valid input files found"), "input validation")
+		return nil, fmt.Errorf("no valid input files found")
 	}
 
-	// Create processor configuration
-	config := app.ProcessorConfig{
-		OutputPath:     outputPath,
-		FrenchMode:     frenchMode,
-		SmartQuotes:    smartQuotes,
-		SkipDuplicates: skipDuplicates,
-		Verbose:        verbose,
-	}
+	return inputPaths, nil
+}
 
-	// Create and configure processor
-	processor := app.NewProcessor(config)
+func parseFile(filePath string) (*models.InputFile, error) {
+	inputFile := models.NewInputFile(filePath)
+	inputFile.DetectSeparator()
 
-	// Set up cleanup on exit
-	defer processor.Cleanup()
-
-	// Validate configuration
-	if err := processor.ValidateConfiguration(); err != nil {
-		errorFormatter.ExitWithError(err, "configuration validation")
-	}
-
-	// Process files
-	options := app.ProcessingOptions{
-		KeepHeader: keepHeader,
-	}
-	report, err := processor.ProcessFiles(inputPaths, options)
+	file, err := os.Open(filePath)
 	if err != nil {
-		errorFormatter.ExitWithError(err, "file processing")
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	reader.Comma = inputFile.Separator
+	reader.LazyQuotes = true
+	reader.TrimLeadingSpace = false
+
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
 	}
 
-	// Display summary if verbose or multiple files
-	if verbose || len(inputPaths) > 1 {
-		displaySummary(report)
+	if len(records) < 1 {
+		return nil, fmt.Errorf("file contains no data")
 	}
 
-	// Success exit
-	if verbose {
-		errorFormatter.ExitWithSuccess("Processing completed successfully")
+	inputFile.Headers = records[0]
+	if len(records) > 1 {
+		inputFile.Records = records[1:]
+	}
+
+	return inputFile, nil
+}
+
+func mergeHeaders(inputFiles []*models.InputFile) []string {
+	seen := make(map[string]bool)
+	var merged []string
+
+	for _, inputFile := range inputFiles {
+		for _, header := range inputFile.Headers {
+			if header != "" && !seen[header] {
+				seen[header] = true
+				merged = append(merged, header)
+			}
+		}
+	}
+
+	return merged
+}
+
+func removeDuplicates(entries []*models.DataEntry) []*models.DataEntry {
+	seen := make(map[string]bool)
+	var unique []*models.DataEntry
+
+	for _, entry := range entries {
+		key := entry.GetHash()
+		if !seen[key] {
+			seen[key] = true
+			unique = append(unique, entry)
+		}
+	}
+
+	return unique
+}
+
+func applyTypography(entries []*models.DataEntry, french, quotes bool) {
+	processor := models.NewTypographyProcessor(french, quotes)
+	for _, entry := range entries {
+		for key, value := range entry.Values {
+			entry.Values[key] = processor.ProcessText(value)
+		}
 	}
 }
 
-// displaySummary shows processing summary information
-func displaySummary(report *models.ProcessingReport) {
-	if report == nil {
-		errorFormatter.PrintWarning("Unable to generate processing summary - report is nil")
-		return
+func writeCSV(outputPath string, headers []string, entries []*models.DataEntry) error {
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Write Anki metadata headers directly (not as CSV)
+	ankiHeaders := []string{
+		"#separator:comma",
+		"#html:true",
+		"#columns:" + strings.Join(headers, ","),
 	}
 
-	fmt.Printf("\nProcessing Summary:\n")
-	fmt.Printf("Input files: %d\n", len(report.InputFiles))
-
-	for i, file := range report.InputFiles {
-		fmt.Printf("  %d. %s\n", i+1, file)
+	for _, header := range ankiHeaders {
+		if _, err := file.WriteString(header + "\n"); err != nil {
+			return err
+		}
 	}
 
-	fmt.Printf("Total input records: %s\n", formatNumber(report.TotalInputRecords))
-	if report.DuplicatesRemoved > 0 {
-		fmt.Printf("Duplicates removed: %s\n", formatNumber(report.DuplicatesRemoved))
-	}
-	fmt.Printf("Output records: %s\n", formatNumber(report.OutputRecords))
-	fmt.Printf("Processing time: %.2f seconds\n", report.ProcessingTime.Seconds())
+	// Now write data using CSV writer
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
 
-	// Show efficiency metrics
-	if report.ProcessingTime.Seconds() > 0 && report.OutputRecords > 0 {
-		rate := float64(report.OutputRecords) / report.ProcessingTime.Seconds()
-		fmt.Printf("Processing rate: %.0f records/second\n", rate)
+	// Write data
+	for _, entry := range entries {
+		record := make([]string, len(headers))
+		for i, header := range headers {
+			record[i] = entry.Values[header]
+		}
+		if err := writer.Write(record); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-// isSupportedFile checks if a file has a supported extension
+// Utility functions
 func isSupportedFile(filePath string) bool {
 	ext := strings.ToLower(filepath.Ext(filePath))
 	return ext == ".csv" || ext == ".tsv"
 }
 
-// formatNumber formats a number with commas for thousands
-func formatNumber(n int) string {
-	if n < 1000 {
-		return fmt.Sprintf("%d", n)
+func getFileSize(filePath string) int64 {
+	if info, err := os.Stat(filePath); err == nil {
+		return info.Size()
 	}
-
-	str := fmt.Sprintf("%d", n)
-	result := ""
-
-	for i, digit := range str {
-		if i > 0 && (len(str)-i)%3 == 0 {
-			result += ","
-		}
-		result += string(digit)
-	}
-
-	return result
+	return 0
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately
-func Execute() {
-	// Initialize error formatter for early errors
-	errorFormatter = NewErrorFormatter(false) // Will be updated with verbose setting later
-	defer errorFormatter.HandlePanic()
+func getFileType(filePath string) string {
+	if strings.HasSuffix(strings.ToLower(filePath), ".tsv") {
+		return "tab-separated"
+	}
+	return "comma-separated"
+}
 
+func determineOutputPath(inputPaths []string) string {
+	if outputPath != "" {
+		return outputPath
+	}
+
+	if len(inputPaths) == 1 {
+		base := strings.TrimSuffix(inputPaths[0], filepath.Ext(inputPaths[0]))
+		return base + "_processed.csv"
+	}
+
+	return "merged_output.csv"
+}
+
+func showSummary(inputFiles []string, totalInput, totalOutput int, duration time.Duration) {
+	fmt.Printf("\nProcessing Summary:\n")
+	fmt.Printf("Input files: %d\n", len(inputFiles))
+	for i, file := range inputFiles {
+		fmt.Printf("  %d. %s\n", i+1, file)
+	}
+	fmt.Printf("Total input records: %d\n", totalInput)
+	fmt.Printf("Output records: %d\n", totalOutput)
+	fmt.Printf("Processing time: %.2f seconds\n", duration.Seconds())
+	if duration.Seconds() > 0 && totalOutput > 0 {
+		rate := float64(totalOutput) / duration.Seconds()
+		fmt.Printf("Processing rate: %.0f records/second\n", rate)
+	}
+	fmt.Printf("Processing completed successfully\n")
+}
+
+func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		errorFormatter.ExitWithError(err, "command execution")
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 }
 

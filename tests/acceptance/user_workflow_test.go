@@ -1,10 +1,8 @@
 package acceptance_test
-package acceptance_test
 
 import (
 	"bytes"
 	"encoding/csv"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,7 +13,7 @@ import (
 // TestAcceptance_ClozeColonException tests the complete user workflow
 func TestAcceptance_ClozeColonException(t *testing.T) {
 	// This is the ultimate acceptance test - it will fail until everything is implemented
-	
+
 	// Build the CLI binary first
 	tmpDir, err := os.MkdirTemp("", "ankiprep_acceptance")
 	if err != nil {
@@ -24,11 +22,11 @@ func TestAcceptance_ClozeColonException(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	binaryPath := filepath.Join(tmpDir, "ankiprep")
-	
+
 	// Build the binary
 	buildCmd := exec.Command("go", "build", "-o", binaryPath, "../../../cmd/ankiprep")
 	buildCmd.Dir = tmpDir
-	
+
 	buildOutput, err := buildCmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Failed to build binary: %v\nOutput: %s", err, buildOutput)
@@ -37,7 +35,7 @@ func TestAcceptance_ClozeColonException(t *testing.T) {
 	t.Run("user story: French teacher processing cards", func(t *testing.T) {
 		// Scenario: French teacher has Anki cards with cloze deletions
 		// They want French typography applied but NOT inside cloze blocks
-		
+
 		inputFile := filepath.Join(tmpDir, "teacher_cards.csv")
 		outputFile := filepath.Join(tmpDir, "processed_cards.csv")
 
@@ -94,7 +92,7 @@ func TestAcceptance_ClozeColonException(t *testing.T) {
 
 		err = cmd.Run()
 		if err != nil {
-			t.Fatalf("CLI execution failed: %v\nStdout: %s\nStderr: %s", 
+			t.Fatalf("CLI execution failed: %v\nStdout: %s\nStderr: %s",
 				err, stdout.String(), stderr.String())
 		}
 
@@ -203,17 +201,17 @@ func TestAcceptance_ClozeColonException(t *testing.T) {
 			{"Front", "Back", "Tags"},
 			{
 				"Question : Normal question",
-				"Answer with {{c1::incomplete cloze",  // Malformed cloze
+				"Answer with {{c1::incomplete cloze", // Malformed cloze
 				"test",
 			},
 			{
-				"Another question :",  // Trailing colon
-				"{{c0::Invalid number}} answer",  // Invalid cloze number
+				"Another question :",            // Trailing colon
+				"{{c0::Invalid number}} answer", // Invalid cloze number
 				"test",
 			},
 			{
 				"Empty cloze test:",
-				"This has {{c1::}} empty cloze",  // Empty cloze content
+				"This has {{c1::}} empty cloze", // Empty cloze content
 				"test",
 			},
 		}
@@ -244,7 +242,7 @@ func TestAcceptance_ClozeColonException(t *testing.T) {
 
 		err = cmd.Run()
 		// CLI should not crash, but may return non-zero for warnings
-		
+
 		// Verify output file exists (processing should continue despite errors)
 		if _, err := os.Stat(outputFile); os.IsNotExist(err) {
 			t.Fatal("Output file should be created even with malformed input")
@@ -286,7 +284,7 @@ func TestAcceptance_ClozeColonException(t *testing.T) {
 	t.Run("user story: CLI help and usage", func(t *testing.T) {
 		// User runs --help to understand how to use the tool
 		cmd := exec.Command(binaryPath, "--help")
-		
+
 		var stdout bytes.Buffer
 		cmd.Stdout = &stdout
 
@@ -296,17 +294,17 @@ func TestAcceptance_ClozeColonException(t *testing.T) {
 		}
 
 		helpOutput := stdout.String()
-		
+
 		// Should contain key information a user needs
 		requiredHelpContent := []string{
-			"ankiprep",              // Program name
-			"CSV",                   // File format
-			"French typography",     // Main feature
-			"cloze",                // Key feature
-			"--input",              // Required flag
-			"--output",             // Required flag  
-			"--french",             // Main option
-			"example",              // Usage example
+			"ankiprep",          // Program name
+			"CSV",               // File format
+			"French typography", // Main feature
+			"cloze",             // Key feature
+			"--input",           // Required flag
+			"--output",          // Required flag
+			"--french",          // Main option
+			"example",           // Usage example
 		}
 
 		for _, content := range requiredHelpContent {

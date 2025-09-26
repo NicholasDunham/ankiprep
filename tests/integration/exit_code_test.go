@@ -1,11 +1,10 @@
 package integration
-package integration
 
 import (
 	"os"
 	"os/exec"
-	"testing"
 	"path/filepath"
+	"testing"
 )
 
 // TestExitCodes tests that the CLI returns correct exit codes
@@ -68,7 +67,7 @@ func TestExitCodes(t *testing.T) {
 		cmd := exec.Command(binPath, "--invalid-flag")
 		err := cmd.Run()
 
-		// Should fail with specific exit code  
+		// Should fail with specific exit code
 		if err == nil {
 			t.Error("Expected non-zero exit code for invalid arguments")
 		} else if exitError, ok := err.(*exec.ExitError); ok {
