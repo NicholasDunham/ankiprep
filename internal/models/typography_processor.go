@@ -4,8 +4,6 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
-
-	"golang.org/x/text/unicode/norm"
 )
 
 // TypographyProcessor handles text formatting transformations
@@ -24,23 +22,30 @@ func NewTypographyProcessor(frenchMode, smartQuotes bool) *TypographyProcessor {
 
 // ProcessText applies all typography transformations to the input text
 func (tp *TypographyProcessor) ProcessText(text string) string {
+	if tp == nil {
+		return text
+	}
+
 	result := text
 
-	// Apply smart quotes conversion
+	// Apply French typography if enabled
+	if tp.FrenchMode {
+		result = tp.applyFrenchTypography(result)
+		result = tp.applyGuillemetSpacing(result)
+	}
+
+	// Apply smart quotes if enabled
 	if tp.ConvertSmartQuotes {
 		result = tp.convertSmartQuotes(result)
 	}
 
-	// Apply French typography rules
+	// FINAL STEP: Ensure all NBSP are converted to NNBSP for consistency
+	// This is a final cleanup to catch any NBSP that might have been missed
 	if tp.FrenchMode {
-		result = tp.applyFrenchTypography(result)
+		const nbsp = "\u00A0"
+		const nnbsp = "\u202F"
+		result = strings.ReplaceAll(result, nbsp, nnbsp)
 	}
-
-	// Convert embedded newlines to HTML line breaks
-	result = tp.convertLineBreaks(result)
-
-	// Normalize Unicode (NFC normalization)
-	result = norm.NFC.String(result)
 
 	return result
 }
@@ -90,21 +95,34 @@ func (tp *TypographyProcessor) convertSingleQuotes(text string) string {
 func (tp *TypographyProcessor) applyFrenchTypography(text string) string {
 	// NNBSP (U+202F) - Narrow No-Break Space
 	const nnbsp = "\u202F"
+	// NBSP (U+00A0) - Non-Breaking Space (convert all to NNBSP)
+	const nbsp = "\u00A0"
 
-	// Apply NNBSP before French punctuation marks: : ; ! ?
+	// STEP 1: Convert ALL NBSP to NNBSP first (no exceptions!)
+	text = strings.ReplaceAll(text, nbsp, nnbsp)
+
+	// STEP 2: Apply NNBSP before French punctuation marks: : ; ! ?
 	punctuation := []string{":", ";", "!", "?"}
 
 	for _, punct := range punctuation {
-		// Pattern: word character followed by space and punctuation
-		re := regexp.MustCompile(`(\w)\s*` + regexp.QuoteMeta(punct))
-		text = re.ReplaceAllString(text, `$1`+nnbsp+punct)
+		// Replace regular space + punctuation with NNBSP + punctuation
+		text = strings.ReplaceAll(text, " "+punct, nnbsp+punct)
 
-		// Pattern: word character directly followed by punctuation (no space)
-		re = regexp.MustCompile(`(\w)` + regexp.QuoteMeta(punct))
-		text = re.ReplaceAllString(text, `$1`+nnbsp+punct)
-	}
+		// Handle cases where there's no space before punctuation
+		// Use regex to find word character directly followed by punctuation
+		pattern := regexp.MustCompile(`(\w)` + regexp.QuoteMeta(punct))
+		text = pattern.ReplaceAllStringFunc(text, func(match string) string {
+			// Extract the word character and punctuation
+			wordChar := match[:len(match)-1]
 
-	// Handle French guillemets (quotation marks)
+			// Check if already has NNBSP (avoid duplicates)
+			if strings.HasSuffix(wordChar, nnbsp) {
+				return match // Already has NNBSP, don't modify
+			}
+
+			return wordChar + nnbsp + punct
+		})
+	} // Handle French guillemets (quotation marks)
 	text = tp.applyGuillemetSpacing(text)
 
 	return text
@@ -113,19 +131,29 @@ func (tp *TypographyProcessor) applyFrenchTypography(text string) string {
 // applyGuillemetSpacing applies proper spacing to French guillemets
 func (tp *TypographyProcessor) applyGuillemetSpacing(text string) string {
 	const nnbsp = "\u202F"
+	const nbsp = "\u00A0"
 
-	// Opening guillemets: « followed by text
-	re := regexp.MustCompile(`«\s*(\S)`)
-	text = re.ReplaceAllString(text, `«`+nnbsp+`$1`)
+	// STEP 1: Convert ALL remaining NBSP to NNBSP (should be none, but just in case)
+	text = strings.ReplaceAll(text, nbsp, nnbsp)
 
-	// Closing guillemets: text followed by »
-	re = regexp.MustCompile(`(\S)\s*»`)
-	text = re.ReplaceAllString(text, `$1`+nnbsp+`»`)
+	// STEP 2: Handle guillemet spacing using only NNBSP
+	// Replace regular spaces with NNBSP inside guillemets
+	text = strings.ReplaceAll(text, "« ", "«"+nnbsp)
+	text = strings.ReplaceAll(text, " »", nnbsp+"»")
+
+	// STEP 3: Add NNBSP where there's no space, but avoid duplicates
+	// Only work with NNBSP now since all NBSP should be converted
+
+	// Opening guillemets: « followed by non-NNBSP character (but not space)
+	openPattern := regexp.MustCompile("«([^" + regexp.QuoteMeta(nnbsp) + `\s])`)
+	text = openPattern.ReplaceAllString(text, "«"+nnbsp+"$1")
+
+	// Closing guillemets: non-NNBSP character followed by » (but not space)
+	closePattern := regexp.MustCompile("([^" + regexp.QuoteMeta(nnbsp) + `\s])»`)
+	text = closePattern.ReplaceAllString(text, "$1"+nnbsp+"»")
 
 	return text
-}
-
-// convertLineBreaks converts embedded newlines to HTML line breaks
+} // convertLineBreaks converts embedded newlines to HTML line breaks
 func (tp *TypographyProcessor) convertLineBreaks(text string) string {
 	// Replace \n with <br>
 	text = strings.ReplaceAll(text, "\n", "<br>")

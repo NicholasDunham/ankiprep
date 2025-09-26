@@ -62,7 +62,7 @@ func TestExitCodes(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid arguments return exit code 2", func(t *testing.T) {
+	t.Run("invalid arguments return exit code 1", func(t *testing.T) {
 		// Run CLI with invalid flag
 		cmd := exec.Command(binPath, "--invalid-flag")
 		err := cmd.Run()
@@ -72,8 +72,8 @@ func TestExitCodes(t *testing.T) {
 			t.Error("Expected non-zero exit code for invalid arguments")
 		} else if exitError, ok := err.(*exec.ExitError); ok {
 			exitCode := exitError.ExitCode()
-			if exitCode != 2 {
-				t.Errorf("Expected exit code 2 for invalid arguments, got %d", exitCode)
+			if exitCode != 1 {
+				t.Errorf("Expected exit code 1 for invalid arguments, got %d", exitCode)
 			}
 		}
 	})

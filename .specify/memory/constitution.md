@@ -1,11 +1,11 @@
 <!--
 Sync Impact Report:
-- Version change: template → 1.0.0 (initial creation)
-- Modified principles: All principles defined for Go CLI application
-- Added sections: Core Principles, Development Standards, Quality Gates, Governance
-- Removed sections: None (initial creation)
-- Templates requiring updates: ✅ aligned with plan-template.md, spec-template.md, tasks-template.md
-- Follow-up TODOs: None
+- Version change: 1.1.0 → 1.1.1 (remove cross-platform compatibility requirement)
+- Modified principles: None (principle content unchanged)
+- Added sections: None
+- Removed sections: Target platform compatibility requirement from Quality Gates
+- Templates requiring updates: ✅ plan-template.md (platform field remains optional)
+- Follow-up TODOs: Remove cross-platform references from existing feature specs and quickstart docs
 -->
 
 # AnkiPrep Constitution
@@ -56,15 +56,15 @@ over comprehensive linting infrastructure.
 **Rationale**: Maintains code quality and leverages the Go ecosystem's established
 best practices while avoiding unnecessary tooling overhead for personal projects.
 
-### V. Performance & Reliability
+### V. Reliability & Maintainability
 
-The application MUST be fast and reliable for typical study preparation workloads.
-Performance targets: sub-second response for typical operations, graceful handling
-of large datasets, minimal memory footprint. Proper logging for debugging,
-no silent failures.
+The application MUST be reliable and maintainable for study preparation workloads.
+Code MUST handle errors gracefully, provide proper logging for debugging, and avoid
+silent failures. Focus on correctness and user trust over optimization.
 
-**Rationale**: Study preparation tools must be responsive and dependable to support
-effective learning workflows.
+**Rationale**: Study preparation tools must be dependable to support effective learning
+workflows, but performance optimization should not drive architecture decisions in
+single-user hobby projects.
 
 ## Development Standards
 
@@ -85,8 +85,6 @@ Before any release:
 - Code coverage SHOULD be above 80% (measured locally, not enforced by CI)
 - Basic go vet checks SHOULD pass (run locally as needed)
 - CLI help text and examples MUST be accurate
-- Cross-platform compatibility MUST be verified (Linux, macOS, Windows)
-- Performance regression tests MUST pass
 
 Manual testing of common user workflows is required for major releases.
 Local development tools (linting, formatting) are encouraged but not mandated
@@ -101,4 +99,4 @@ decisions MUST align with these principles.
 Complexity that violates these principles MUST be justified with clear business
 rationale. When in doubt, choose the simpler, more conventional approach.
 
-**Version**: 1.0.0 | **Ratified**: 2025-09-24 | **Last Amended**: 2025-09-24
+**Version**: 1.1.1 | **Ratified**: 2025-09-24 | **Last Amended**: 2025-09-26

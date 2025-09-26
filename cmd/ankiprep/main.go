@@ -231,6 +231,14 @@ func parseFile(filePath string) (*models.InputFile, error) {
 	}
 
 	inputFile.Headers = records[0]
+
+	// Strip UTF-8 BOM from first header field if present
+	if len(inputFile.Headers) > 0 && len(inputFile.Headers[0]) > 0 {
+		if runes := []rune(inputFile.Headers[0]); len(runes) > 0 && runes[0] == '\uFEFF' {
+			inputFile.Headers[0] = string(runes[1:])
+		}
+	}
+
 	if len(records) > 1 {
 		inputFile.Records = records[1:]
 	}
